@@ -1,0 +1,56 @@
+# The variables below assume the following:
+#
+# - the intended dhcp server serves on subnet 10.10.11.0/24
+# - the intended dhcp server has an interface with 10.10.11.3
+# - the intended dhcp server also listens on its interface for tftp AND http
+# - tftp is used for tftp boot,  http is used for serving kickstart files AND install DVD tree
+# - also assumes that the router on the network is 10.10.11.1
+#
+#
+# Please adjust the variables to suit your own needs!
+#
+# This includes:
+# - changing the MAC addresses of the test hosts BEFORE trying tftp boots
+# - restarting the DHCP service with "service restart dhcpd" after changing dhcpd.conf !
+
+
+###
+### DHCPD server config items
+###
+
+dhcpd_config_file: "/etc/dhcp/dhcpd.conf"
+
+dhcpd_domain: "mydom.com"
+dhcpd_subnet: "10.10.11.0"
+dhcpd_netmask: "255.255.255.0"
+dhcpd_broadcast: "10.10.11.255"
+dhcpd_nameserver: "10.10.11.1"
+dhcpd_router: "10.10.11.1"
+dhcpd_range: "10.10.11.100 10.10.11.254"
+dhcpd_tftpserver: "10.10.11.3"
+
+# Created separate variable for web server location in case you want to use a 3rd party
+# web server in the future.
+# In this playbook however set this to the same IP address as 'dhcpd_tftpserver'
+dhcpd_webserver: "10.10.11.3"
+dhcpd_webserver_root: "/var/www/html"
+
+
+###
+### Anaconda kickstart file config items
+###
+
+# installation_mode values can be:  cmdline, text, graphical
+installation_mode: "text"
+default_hostname: "hostname"
+default_domain: "localdomain"
+
+# Oracle Linux interface naming scheme
+oraclelinux6_iface0: "eth0"
+oraclelinux7_iface0: "enp0s3"
+
+rootpassword: "oracle"
+second_user_name: "admin"
+second_user_password: "admin"
+
+

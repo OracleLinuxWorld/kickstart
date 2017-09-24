@@ -1,0 +1,39 @@
+#
+# DHCP Server Configuration file.
+#   see /usr/share/doc/dhcp*/dhcpd.conf.example
+#   see dhcpd.conf(5) man page
+#
+authoritative;
+allow booting;
+allow bootp;
+
+set vendorclass = option vendor-class-identifier;
+option pxe-system-type code 93 = unsigned integer 16;
+set pxetype = option pxe-system-type;
+
+option domain-name "{{ dhcpd_domain }}";
+
+subnet {{ dhcpd_subnet }} netmask {{ dhcpd_netmask }} {
+  option domain-name-servers {{ dhcpd_nameserver }};
+  option broadcast-address {{ dhcpd_broadcast }};
+  option routers {{ dhcpd_router }};
+  default-lease-time 14400;
+  max-lease-time 28800;
+  range {{ dhcpd_range }};
+}
+
+host OL69 {
+hardware ethernet C8:5B:76:A5:78:C1;
+fixed-address 10.10.11.251;
+option host-name "OL69";
+filename "pxelinux-ol69/pxelinux.0";
+next-server {{ dhcpd_tftpserver }};
+}
+
+host OL74 {
+hardware ethernet C8:5B:76:A5:7D:12;
+fixed-address 10.10.11.252;
+option host-name "OL74";
+filename "pxelinux-ol74/pxelinux.0";
+next-server {{ dhcpd_tftpserver }};
+}

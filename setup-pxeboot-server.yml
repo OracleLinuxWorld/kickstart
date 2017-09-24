@@ -1,0 +1,196 @@
+- hosts: pxeserver     
+  remote_user: root
+
+     
+  tasks:
+
+
+###
+### Stop firewalling
+###
+
+  - name: Stop and disable iptables
+    service:
+       name: iptables
+       state: stopped
+       enabled: False
+    when:
+       - ansible_os_family == "RedHat"
+       - ansible_distribution_major_version == "6"
+    tags:
+      - firewalling
+
+
+  - name: Stop and disable firewalld
+    service:
+       name: firewalld
+       state: stopped
+       enabled: False
+    when:
+       - ansible_os_family == "RedHat"
+       - ansible_distribution_major_version == "7"
+    tags:
+      - firewalling
+
+
+###
+### Installation of RPM packages
+###
+
+  - name: Required RPM packages for DHCP etc should be up2date
+    yum:
+       name: "{{ item }}"
+       state: latest
+    with_items:
+       - dhcp
+       - net-tools
+       - tftp-server
+       - syslinux
+       - httpd
+       - unzip
+    tags:
+      - packages
+
+
+  - name: Nice to have RPM packages for DHCP etc should be up2date
+    yum:
+       name: "{{ item }}"
+       state: latest
+    with_items:
+       - telnet
+       - tcpdump
+       - wget
+       - net-tools
+    tags:
+      - packages
+
+
+###
+### Enable web server
+###
+
+  - name: Start and enable HTTPD at boot time
+    service:
+       name: httpd
+       state: started
+       enabled: True
+    tags:
+      - webserver_enable
+
+
+
+###
+### Directories, files etc
+###
+
+### Create mount point /cdrom
+  - file:
+      path: /cdrom
+      state: directory
+      mode: 0777
+    tags:
+      - files
+
+### Symlink for Oracle Linux 6.9
+  - file:
+      src: /cdrom
+      dest: "{{ dhcpd_webserver_root }}/ol69"
+      owner: root
+      group: root
+      - files
+
+### Symlink for Oracle Linux 7.4
+  - file:
+      src: /cdrom
+      dest: "{{ dhcpd_webserver_root }}/ol74"
+      owner: root
+      group: root
+      state: link
+    tags:
+      - files
+
+### Copy kickstart file for Oracle Linux 6.9
+  - template:
+     src: templates/ol69-ks.cfg.j2
+     dest: "{{ dhcpd_webserver_root }}/ol69-ks.cfg"
+      mode: 0755
+      owner: root
+      group: root 
+    tags:
+      - files
+
+### Copy kickstart file for Oracle Linux 7.4
+  - template:
+     src: templates/ol74-ks.cfg.j2
+     dest: "{{ dhcpd_webserver_root }}/ol74-ks.cfg"
+      mode: 0755
+      owner: root
+      group: root 
+    tags:
+      - files
+
+### Copy DHCP config file
+  - template:
+     src: templates/dhcpd.conf.j2
+     dest: "{{ dhcpd_config_file }}"
+      mode: 0750
+      owner: root
+      group: root 
+    tags:
+      - files
+
+### Copy the installation bootstrap files
+  - name: Copying the files for Oracle Linux 6.9
+    unarchive: src=pxelinux-ol69.tgz dest=/var/lib/tftpboot
+    tags:
+      - files
+
+  - name: Copying the files for Oracle Linux 7.4
+    unarchive: src=pxelinux-ol74.tgz dest=/var/lib/tftpboot
+    tags:
+      - files
+
+
+### Copy the pxelinux.cfg/default files for Oracle Linux 6.9
+  - template:
+     src: templates/pxelinux.cfg.ol69.j2
+     dest: /var/lib/tftpboot/pxelinux-ol69/pxelinux.cfg/default
+      mode: 0750
+      owner: root
+      group: root 
+    tags:
+      - files
+
+### Copy the pxelinux.cfg/default files for Oracle Linux 7.4
+  - template:
+     src: templates/pxelinux.cfg.ol74.j2
+     dest: /var/lib/tftpboot/pxelinux-ol74/pxelinux.cfg/default
+      mode: 0750
+      owner: root
+      group: root 
+    tags:
+      - files
+
+### Copy xinetd-tftp file to enable TFTP 
+  - copy: 
+      src: xinetd-tftp
+      dest: /etc/xinetd.d
+      mode: 0750
+      owner: root
+      group: root 
+    tags:
+      - files
+
+
+###
+### Enable DHCP service
+###
+
+  - name: Start and enable DHCP at boot time
+    service:
+       name: dhcpd
+       state: started
+       enabled: True
+    tags:
+      - dhcpserver_enable
+

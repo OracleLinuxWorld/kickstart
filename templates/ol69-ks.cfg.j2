@@ -1,0 +1,61 @@
+#version=DEVEL
+# System authorization information
+auth --enableshadow --passalgo=sha512
+
+reboot
+install
+
+# Use HTTP as installation medium
+url --url http://{{ dhcpd_webserver }}/ol69
+
+# Set installation mode: either cmdline, text or graphical
+{{ installation_mode }}
+
+# Run the Setup Agent on first boot
+firstboot --enable
+ignoredisk --only-use=sda
+
+# Keyboard layouts
+keyboard us
+
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device={{ oraclelinux6_iface0 }} --ipv6=auto --activate
+network  --hostname={{ default_hostname }}.{{ default_domain }}
+
+firewall --disabled
+
+# Root password
+rootpw --plaintext "{{ rootpassword }}"
+
+# System services
+services --disabled="chronyd"
+
+# System timezone
+timezone Europe/Amsterdam
+user --groups=wheel --name="{{ second_user_name }}" --password="{{ second_user_password }}" --gecos="{{ second_user_name }}"
+
+# System bootloader configuration
+# ps: blacklist option introduced for compatibility with Lenovo P50 laptop
+bootloader --append="rhgb crashkernel=auto rdblacklist=nouveau nouveau.modeset=0" --location=mbr --driveorder="sda"
+
+
+# Partition information
+clearpart --all --drives=sda
+part /boot --fstype=ext4 --size=500
+part pv.008002 --grow --size=1
+volgroup vg_hostname --pesize=4096 pv.008002
+logvol / --fstype=ext4 --name=lv_root --vgname=vg_hostname --grow --size=1024 --maxsize=51200
+logvol swap --name=lv_swap --vgname=vg_hostname --grow --size=2016 --maxsize=4032
+
+
+%packages
+@core
+@client-mgmt-tools
+@java-platform
+@network-tools
+kexec-tools
+
+%end

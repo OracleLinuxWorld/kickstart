@@ -1,0 +1,4 @@
+[pxeserver]
+# Include the IP address on which the intended DHCP/TFTP/kickstart server
+# is reachable for Ansible. Example:
+10.0.2.14

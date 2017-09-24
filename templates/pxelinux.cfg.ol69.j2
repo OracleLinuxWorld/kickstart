@@ -1,0 +1,7 @@
+prompt 5
+default {{ default_hostname }}
+timeout 5
+
+label {{ default_hostname }}
+kernel vmlinuz
+append initrd=initrd.img ksdevice={{ oraclelinux6_iface0 }} kssendmac ks=http:/{{ dhcpd_webserver }}/ol69-ks.cfg
